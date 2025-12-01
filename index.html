@@ -9,5 +9,31 @@
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
+    <template>
+      <div v-if="isOpen" class="custom-modal">
+          <div class="card new-parcours">
+              <div class="card-header" style="background: #273656">
+                  <template v-if="parcours && parcours.ID"> Modification du parcours </template>
+                  <template v-else> Nouveau parcours </template>
+              </div>
+              <div class="card-body">
+                  <div class="card-text mt-1 mb-1">
+                      <form>
+                          <CustomInput id="intitule" libelle="Intitulé" type="text" placeholder="Intitulé du parcours" />
+                          <CustomInput class="mt-2" id="annee" libelle="Année" type="number"
+                              placeholder="Année de formation" />
+                      </form>
+                  </div>
+                  <CustomButton class="mt-1" style="margin-left: 5px" :color="BootstrapButtonEnum.danger"
+                      @click="closeForm">
+                      Annuler
+                  </CustomButton>
+                  <CustomButton class="mt-1" style="margin-left: 5px" :color="BootstrapButtonEnum.primary">
+                      Enregistrer
+                  </CustomButton>
+              </div>
+          </div>
+      </div>
+  </template>
   </body>
 </html>

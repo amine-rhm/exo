@@ -28,3 +28,33 @@ main .application {
   flex-grow: 1;
 }
 </style>
+
+<style scoped> 
+.custom-modal { 
+  position: absolute; 
+  left: 0; 
+  top: 0; 
+  height: 100%; 
+  width: 100%; 
+  background-color: rgba(87, 86, 86, 0.5); 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  text-align: center; 
+} 
+
+.custom-modal .card { 
+  width: 250px; 
+} 
+
+.card-header { 
+  background: #273656; 
+  color: white; 
+  text-align: left; 
+} 
+
+.card-text { 
+  text-align: left; 
+} 
+</style> 
