@@ -2,67 +2,48 @@
 import { ref, onBeforeMount, watch } from 'vue'; 
 import { BootstrapButtonEnum } from '@/types/BootstrapButtonEnum'; 
 import { Etudiant } from '@/domain/entities/Etudiant'; 
-import CustomInput from '@/presentation/components/forms/components/CustomInput.vue'; 
 import CustomButton from '@/presentation/components/forms/components/customButton.vue'; 
 import CustomModal from '@/presentation/components/modals/CustomModal.vue'; 
 import { EtudiantDAO } from '@/domain/does/Etudiant'; 
 import { ParcoursDAO } from '@/domain/does/ParcoursDAO'; 
-import type { Parcours } from '@/domain/entities/Parcours'; 
+import type { IParcours } from '@/domain/entities/Parcours'; 
 
-const currentEtudiant = ref<Etudiant>(new Etudiant(null, null, null, null, null)); 
+const currentEtudiant = ref<any>(new Etudiant(0, '', '', '', null)); 
 const isOpen = ref(false); 
-const formErrors = ref<{ 
-    Nom: string | null; 
-    Prenom: string | null; 
-    Email: string | null; 
-    Parcours: string | null;
-}>({ 
-    Nom: null, 
-    Prenom: null, 
-    Email: null,
-    Parcours: null,
-}); 
-
-const parcoursOptions = ref<Parcours[]>([]); 
+const parcoursOptions = ref<IParcours[]>([]); 
 
 const openForm = (etudiant: Etudiant | null = null) => { 
-    isOpen.value = true; 
     if (etudiant) { 
-        currentEtudiant.value = etudiant; 
-    } 
+        currentEtudiant.value = new Etudiant(
+            etudiant.ID,
+            etudiant.Nom,
+            etudiant.Prenom,
+            etudiant.Email,
+            etudiant.Parcours
+        );
+    } else {
+        currentEtudiant.value = new Etudiant(0, '', '', '', null);
+    }
+    isOpen.value = true; 
 }; 
 
 const closeForm = () => { 
     isOpen.value = false; 
-    currentEtudiant.value = new Etudiant(null, null, null, null, null); 
+    currentEtudiant.value = new Etudiant(0, '', '', '', null); 
 }; 
 
 const saveEtudiant = async () => { 
-    // Vérifier les erreurs
-    if (formErrors.value.Nom || formErrors.value.Prenom || formErrors.value.Email) { 
-        alert('Veuillez corriger les erreurs avant de sauvegarder');
-        return; 
-    } 
-
-    // Vérifier les champs obligatoires
     if (!currentEtudiant.value.Nom || !currentEtudiant.value.Prenom || !currentEtudiant.value.Email) {
         alert('Veuillez remplir tous les champs obligatoires');
         return;
     }
 
     try {
-        if (currentEtudiant.value.ID) { 
-            // MISE À JOUR d'un étudiant existant
-            console.log('Mise à jour de l\'étudiant:', currentEtudiant.value.ID);
-            const updatedEtudiant = await EtudiantDAO.getInstance().update(
-                currentEtudiant.value.ID, 
-                currentEtudiant.value
-            );
+        if (currentEtudiant.value.ID && currentEtudiant.value.ID > 0) { 
+            await EtudiantDAO.getInstance().update(currentEtudiant.value.ID as number, currentEtudiant.value);
             alert('Étudiant mis à jour avec succès'); 
-            emit('update:etudiant', updatedEtudiant); 
+            emit('update:etudiant', currentEtudiant.value); 
         } else { 
-            // CRÉATION d'un nouvel étudiant
-            console.log('Création d\'un nouvel étudiant'); 
             const newEtudiant = await EtudiantDAO.getInstance().create(currentEtudiant.value);
             alert('Étudiant créé avec succès'); 
             emit('create:etudiant', newEtudiant); 
@@ -82,15 +63,13 @@ const props = defineProps({
     }, 
 }); 
 
-const emit = defineEmits(['create:etudiant', 'update:etudiant']); 
+const emit = defineEmits<{
+    'create:etudiant': [etudiant: any];
+    'update:etudiant': [etudiant: any];
+}>(); 
 
 onBeforeMount(async () => { 
-    if (props.etudiant) { 
-        currentEtudiant.value = props.etudiant; 
-    } 
-
     try {
-        // Chargement de la liste des parcours 
         parcoursOptions.value = await ParcoursDAO.getInstance().list();
     } catch (error) {
         console.error('Erreur chargement parcours:', error);
@@ -104,35 +83,8 @@ defineExpose({
 
 watch(() => props.etudiant, (newEtudiant) => { 
     if (newEtudiant) { 
-        currentEtudiant.value = newEtudiant; 
+        currentEtudiant.value = newEtudiant as any;
         openForm(); 
-    } 
-}); 
-
-watch(() => currentEtudiant.value.Nom, () => { 
-    if (!currentEtudiant.value.Nom || currentEtudiant.value.Nom.trim() === '' || currentEtudiant.value.Nom.length < 2) { 
-        formErrors.value.Nom = 'Le nom doit faire au moins 2 caractères'; 
-    } else { 
-        formErrors.value.Nom = null; 
-    } 
-}); 
-
-watch(() => currentEtudiant.value.Prenom, () => { 
-    if (!currentEtudiant.value.Prenom || currentEtudiant.value.Prenom.trim() === '' || currentEtudiant.value.Prenom.length < 2) { 
-        formErrors.value.Prenom = 'Le prénom doit faire au moins 2 caractères'; 
-    } else { 
-        formErrors.value.Prenom = null; 
-    } 
-}); 
-
-watch(() => currentEtudiant.value.Email, () => { 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!currentEtudiant.value.Email || currentEtudiant.value.Email.trim() === '') { 
-        formErrors.value.Email = 'L\'email est obligatoire'; 
-    } else if (!emailRegex.test(currentEtudiant.value.Email)) {
-        formErrors.value.Email = 'L\'email n\'est pas valide';
-    } else { 
-        formErrors.value.Email = null; 
     } 
 }); 
 </script> 
@@ -140,66 +92,86 @@ watch(() => currentEtudiant.value.Email, () => {
 <template> 
     <CustomModal :isOpen="isOpen"> 
         <template v-slot:title> 
-            <template v-if="etudiant && etudiant.ID">Modification de l'étudiant</template> 
+            <template v-if="currentEtudiant && currentEtudiant.ID && currentEtudiant.ID > 0">Modification de l'étudiant</template> 
             <template v-else>Nouvel étudiant</template> 
         </template> 
         <template v-slot:body> 
-            <div class="text-start mt-1 mb-1"> 
-                <form> 
-                    <CustomInput 
+            <form class="text-start">
+                <div class="mb-3">
+                    <label for="nom" class="form-label">Nom</label>
+                    <input 
+                        id="nom"
                         v-model="currentEtudiant.Nom" 
-                        class="mt-2" 
-                        id="nom" 
-                        libelle="Nom" 
                         type="text" 
+                        class="form-control"
                         placeholder="Nom de l'étudiant" 
-                        :error="formErrors.Nom" 
-                    /> 
-                    <CustomInput 
+                    />
+                </div>
+
+                <div class="mb-3">
+                    <label for="prenom" class="form-label">Prénom</label>
+                    <input 
+                        id="prenom"
                         v-model="currentEtudiant.Prenom" 
-                        id="prenom" 
-                        libelle="Prénom" 
                         type="text" 
+                        class="form-control"
                         placeholder="Prénom de l'étudiant" 
-                        :error="formErrors.Prenom" 
-                    /> 
-                    <CustomInput 
+                    />
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input 
+                        id="email"
                         v-model="currentEtudiant.Email" 
-                        id="email" 
-                        libelle="Email" 
                         type="email" 
+                        class="form-control"
                         placeholder="email@exemple.fr" 
-                        :error="formErrors.Email" 
-                    /> 
-                    <div class="form-group"> 
-                        <label for="parcours">Parcours :</label> 
-                        <v-select 
-                            label="NomParcours" 
-                            v-model="currentEtudiant.Parcours" 
-                            :options="parcoursOptions"
-                        ></v-select> 
-                        <div v-if="formErrors.Parcours" class="invalid-feedback"> 
-                            {{ formErrors.Parcours }} 
-                        </div> 
-                    </div> 
-                </form> 
-            </div> 
+                    />
+                </div>
+
+                <div class="mb-3">
+                    <label for="parcours" class="form-label">Parcours</label>
+                    <select 
+                        id="parcours"
+                        :value="currentEtudiant.Parcours?.ID ?? ''"
+                        @change="(e: Event) => {
+                            const target = e.target as HTMLSelectElement;
+                            if (!target.value) {
+                                currentEtudiant.Parcours = null;
+                                return;
+                            }
+                            const id = parseInt(target.value);
+                            const parcours = parcoursOptions.find(p => p.ID === id);
+                            currentEtudiant.Parcours = parcours ? parcours : null;
+                        }"
+                        class="form-select"
+                    >
+                        <option value="">Sélectionner un parcours...</option>
+                        <option 
+                            v-for="parcours in parcoursOptions" 
+                            :key="parcours.ID ?? 0"
+                            :value="parcours.ID"
+                        >
+                            {{ parcours.NomParcours }}
+                        </option>
+                    </select>
+                </div>
+            </form>
+        </template>
+        <template v-slot:footer>
             <CustomButton 
-                class="mt-1" 
-                style="margin-left: 5px" 
                 :color="BootstrapButtonEnum.danger" 
                 @click="closeForm"
             > 
                 Annuler 
             </CustomButton> 
             <CustomButton 
-                class="mt-1" 
-                style="margin-left: 5px" 
                 :color="BootstrapButtonEnum.primary" 
                 @click="saveEtudiant"
             > 
                 Enregistrer 
             </CustomButton> 
-        </template> 
+        </template>
     </CustomModal> 
 </template>

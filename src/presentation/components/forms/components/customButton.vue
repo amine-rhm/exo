@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { BootstrapButtonEnum } from '@/types/BootstrapButtonEnum';
-import { computed, defineProps } from 'vue';
+import { computed} from 'vue';
 
 const props = defineProps<{
     color: BootstrapButtonEnum

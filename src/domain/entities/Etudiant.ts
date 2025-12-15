@@ -1,31 +1,58 @@
-import { Parcours } from './Parcours';
+// @/domain/entities/Etudiant.ts
+
+export interface IParcours {
+  ID: number;
+  NomParcours: string;
+}
 
 export interface IEtudiant {
   ID: number | null;
-  Nom: string | null;
-  Prenom: string | null;
-  Email: string | null;
-  Parcours: Parcours | null;  // un seul parcour pour chaque etudiant
-
-  toJSON(): Object;
+  Nom: string;
+  Prenom: string;
+  Email: string;
+  Parcours: IParcours | null;
 }
 
 export class Etudiant implements IEtudiant {
-  constructor(
-    public ID: number | null,
-    public Nom: string | null,
-    public Prenom: string | null,
-    public Email: string | null,
-    public Parcours: Parcours | null
-  ) {}
+  ID: number | null;
+  Nom: string;
+  Prenom: string;
+  Email: string;
+  Parcours: IParcours | null;
 
-  toJSON(): Object {
+  constructor(
+    ID: number | null = null,
+    Nom: string = '',
+    Prenom: string = '',
+    Email: string = '',
+    Parcours: IParcours | null = null
+  ) {
+    this.ID = ID;
+    this.Nom = Nom;
+    this.Prenom = Prenom;
+    this.Email = Email;
+    this.Parcours = Parcours;
+  }
+
+  // Créer une instance depuis un objet JSON
+  static fromJSON(data: any): Etudiant {
+    return new Etudiant(
+      data.ID || null,
+      data.Nom || '',
+      data.Prenom || '',
+      data.Email || '',
+      data.Parcours || null
+    );
+  }
+
+  // Convertir en objet simple pour l'API
+  toPlainObject() {
     return {
       ID: this.ID,
       Nom: this.Nom,
       Prenom: this.Prenom,
       Email: this.Email,
-      ParcoursId: this.Parcours?.ID // Stocker seulement l'ID du parcours
+      Parcours: this.Parcours,
     };
   }
 }

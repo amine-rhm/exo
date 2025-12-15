@@ -21,7 +21,6 @@ export class EtudiantDAO implements IDAO<IEtudiant> {
 
   /**
    * Charge les étudiants depuis localStorage
-   * IMPORTANT: Reconstruit l'objet Parcours à partir de l'ID stocké
    */
   private async loadFromStorage(): Promise<IEtudiant[]> {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -31,7 +30,6 @@ export class EtudiantDAO implements IDAO<IEtudiant> {
         const data = JSON.parse(saved);
         const allParcours = await this.parcoursDAO.list();
         
-        // Reconstruire les étudiants avec l'objet Parcours complet
         return data.map((etudiantData: any) => {
           const parcours = etudiantData.ParcoursId 
             ? allParcours.find(p => p.ID === etudiantData.ParcoursId) || null
@@ -51,17 +49,14 @@ export class EtudiantDAO implements IDAO<IEtudiant> {
       }
     }
     
-    // Données par défaut si localStorage est vide
     return [];
   }
 
   /**
    * Sauvegarde les étudiants dans localStorage
-   * IMPORTANT: Stocke seulement l'ID du Parcours, pas l'objet complet
    */
   private saveToStorage(etudiantList: IEtudiant[]): void {
     try {
-      // Transformer les étudiants pour ne stocker que l'ID du parcours
       const dataToStore = etudiantList.map(etudiant => ({
         ID: etudiant.ID,
         Nom: etudiant.Nom,
@@ -77,13 +72,31 @@ export class EtudiantDAO implements IDAO<IEtudiant> {
     }
   }
 
+  /**
+   * Vérifie si un étudiant avec le même Nom + Prénom + Email existe déjà
+   */
+  private async etudiantExists(nom: string, prenom: string, email: string, excludeId?: number): Promise<boolean> {
+    const etudiantList = await this.loadFromStorage();
+    return etudiantList.some(e => 
+      e.Nom.toLowerCase() === nom.toLowerCase() && 
+      e.Prenom.toLowerCase() === prenom.toLowerCase() && 
+      e.Email.toLowerCase() === email.toLowerCase() &&
+      (!excludeId || e.ID !== excludeId)
+    );
+  }
+
   public async create(data: IEtudiant): Promise<IEtudiant> { 
+    // Vérifier que l'étudiant n'existe pas déjà (Nom + Prénom + Email)
+    // Un étudiant ne peut exister qu'une seule fois
+    if (await this.etudiantExists(data.Nom, data.Prenom, data.Email)) {
+      throw new Error(`L'étudiant "${data.Nom} ${data.Prenom}" avec l'email "${data.Email}" existe déjà et suit déjà un parcours`);
+    }
+
     const etudiantList = await this.loadFromStorage();
     
-    // Générer un ID unique
     const newEtudiant = { 
       ...data, 
-      ID: Date.now()
+      ID: Date.now() 
     };
     
     etudiantList.push(newEtudiant);
@@ -110,8 +123,12 @@ export class EtudiantDAO implements IDAO<IEtudiant> {
     if (index === -1) {
       throw new Error('Étudiant non trouvé');
     }
+
+    // Vérifier que le même étudiant n'existe pas ailleurs (même si on change le parcours)
+    if (await this.etudiantExists(data.Nom, data.Prenom, data.Email, id)) {
+      throw new Error(`Un autre étudiant avec ce nom, prénom et email existe déjà`);
+    }
     
-    // Mettre à jour l'étudiant en conservant l'ID
     etudiantList[index] = { ...data, ID: id };
     this.saveToStorage(etudiantList);
     

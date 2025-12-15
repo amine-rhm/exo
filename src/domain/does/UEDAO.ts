@@ -21,7 +21,6 @@ export class UEDAO implements IDAO<IUE> {
 
   /**
    * Charge les UE depuis localStorage
-   * IMPORTANT: Reconstruit les objets Parcours à partir des IDs stockés
    */
   private async loadFromStorage(): Promise<IUE[]> {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -31,7 +30,6 @@ export class UEDAO implements IDAO<IUE> {
         const data = JSON.parse(saved);
         const allParcours = await this.parcoursDAO.list();
         
-        // Reconstruire les UE avec les objets Parcours complets
         return data.map((ueData: any) => {
           const parcours = ueData.ParcoursIds 
             ? allParcours.filter(p => ueData.ParcoursIds.includes(p.ID))
@@ -50,17 +48,14 @@ export class UEDAO implements IDAO<IUE> {
       }
     }
     
-    // Données par défaut si localStorage est vide
     return [];
   }
 
   /**
    * Sauvegarde les UE dans localStorage
-   * IMPORTANT: Stocke seulement les IDs des Parcours, pas les objets complets
    */
   private saveToStorage(UEList: IUE[]): void {
     try {
-      // Transformer les UE pour ne stocker que les IDs des parcours
       const dataToStore = UEList.map(ue => ({
         ID: ue.ID,
         Intitule: ue.Intitule,
@@ -75,13 +70,30 @@ export class UEDAO implements IDAO<IUE> {
     }
   }
 
+  /**
+   * Vérifie si une UE avec le même NumeroUe existe déjà
+   */
+  private async ueExists(numeroUe: string | null, excludeId?: number): Promise<boolean> {
+    if (!numeroUe) return false;
+    
+    const UEList = await this.loadFromStorage();
+    return UEList.some(u => 
+      u.NumeroUe && u.NumeroUe.toLowerCase() === numeroUe.toLowerCase() &&
+      (!excludeId || u.ID !== excludeId)
+    );
+  }
+
   public async create(data: IUE): Promise<IUE> { 
+    // Vérifier que l'UE n'existe pas déjà (même NumeroUe)
+    if (data.NumeroUe && await this.ueExists(data.NumeroUe)) {
+      throw new Error(`Une UE avec le numéro "${data.NumeroUe}" existe déjà`);
+    }
+
     const UEList = await this.loadFromStorage();
     
-    // Générer un ID unique
     const newUE = { 
       ...data, 
-      ID: Date.now()
+      ID: Date.now() + Math.random()
     };
     
     UEList.push(newUE);
@@ -108,8 +120,12 @@ export class UEDAO implements IDAO<IUE> {
     if (index === -1) {
       throw new Error('UE non trouvée');
     }
+
+    // Vérifier que le nouveau NumeroUe n'existe pas pour une autre UE
+    if (data.NumeroUe && data.NumeroUe !== UEList[index].NumeroUe && await this.ueExists(data.NumeroUe, id)) {
+      throw new Error(`Une autre UE avec le numéro "${data.NumeroUe}" existe déjà`);
+    }
     
-    // Mettre à jour l'UE en conservant l'ID
     UEList[index] = { ...data, ID: id };
     this.saveToStorage(UEList);
     

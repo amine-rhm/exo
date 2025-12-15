@@ -48,6 +48,10 @@ defineProps({
 
             </div> 
 
+            <div class="card-footer">
+                 <slot name="footer"></slot>
+            </div>
+
         </div> 
 
     </div> 
