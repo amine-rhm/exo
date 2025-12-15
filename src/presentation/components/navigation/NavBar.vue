@@ -12,6 +12,7 @@ import { RouterLink } from 'vue-router'
                 <li class="nav-item">
                    <RouterLink class="nav-link" active-class="active" to="/">Accueil</RouterLink>
                    <RouterLink class="nav-link" active-class="active"  to="/parcours">Parcours</RouterLink>
+                   <RouterLink class="nav-link" active-class="active"  to="/Ue">UE</RouterLink>
                 </li>
           </ul>
         <hr>

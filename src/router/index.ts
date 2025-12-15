@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../presentation/views/HomeView.vue';
 import ParcoursListView from '@/presentation/views/ParcoursListView.vue';
+import UeListeView from '@/presentation/views/UeListView.vue';
 
 
 const router = createRouter({
@@ -16,6 +17,12 @@ const router = createRouter({
       path: '/parcours', 
       name: 'parcours', 
       component: ParcoursListView 
+   },
+
+  { 
+      path: '/Ue', 
+      name: 'Ue', 
+      component: UeListeView
  } 
   ]
 });
