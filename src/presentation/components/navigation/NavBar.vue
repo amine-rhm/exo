@@ -13,6 +13,7 @@ import { RouterLink } from 'vue-router'
                    <RouterLink class="nav-link" active-class="active" to="/">Accueil</RouterLink>
                    <RouterLink class="nav-link" active-class="active"  to="/parcours">Parcours</RouterLink>
                    <RouterLink class="nav-link" active-class="active"  to="/Ue">UE</RouterLink>
+                   <RouterLink class="nav-link" active-class="active"  to="/Etudiant">Etudiant</RouterLink>
                 </li>
           </ul>
         <hr>

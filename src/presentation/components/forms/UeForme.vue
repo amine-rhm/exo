@@ -45,9 +45,6 @@ const formErrors = ref<{
  
 
 const parcoursOptions = ref<Parcours[]>([]); 
-
- 
-
 const openForm = (ue: UE | null = null) => { 
 
     isOpen.value = true; 
@@ -87,8 +84,8 @@ const saveUE = async () => {
 
     try {
         if (currentUe.value.ID) { 
-            // ✅ MISE À JOUR d'une UE existante
-            console.log('Mise à jour de l\'UE:', currentUe.value.ID); // Debug
+            //  MISE À JOUR d'une UE existante
+            console.log('Mise à jour de l\'UE:', currentUe.value.ID);
             const updatedUE = await UEDAO.getInstance().update(
                 currentUe.value.ID, 
                 currentUe.value
@@ -96,15 +93,15 @@ const saveUE = async () => {
             alert('UE mise à jour avec succès'); 
             emit('update:ue', updatedUE); 
         } else { 
-            // ✅ CRÉATION d'une nouvelle UE
-            console.log('Création d\'une nouvelle UE'); // Debug
+            // CRÉATION d'une nouvelle UE
+            console.log('Création d\'une nouvelle UE'); 
             const newUE = await UEDAO.getInstance().create(currentUe.value);
             alert('UE créée avec succès'); 
             emit('create:ue', newUE); 
         }
         closeForm(); 
     } catch (ex: any) { 
-        console.error('Erreur lors de la sauvegarde:', ex); // Debug
+        console.error('Erreur lors de la sauvegarde:', ex); 
         alert('Erreur: ' + ex.message); 
     }
 };
