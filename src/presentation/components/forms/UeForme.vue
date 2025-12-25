@@ -231,9 +231,13 @@ watch(() => currentUe.value.NumeroUe, () => {
 
                         <label for="intitule">Parcours :</label> 
 
-                        <v-select multiple label="NomParcours" v-model="currentUe.Parcours" 
-
-                            :options="parcoursOptions"></v-select> 
+<v-select
+  multiple
+  label="NomParcours"
+  :model-value="currentUe.Parcours"
+  @update:model-value="(selected: { ID: number | null; NomParcours: string | null; AnneeFormation: number | null; }[] | null) => currentUe.Parcours = selected"
+  :options="parcoursOptions">
+</v-select>
 
                         <div v-if="formErrors.parcours" class="invalid-feedback"> 
 

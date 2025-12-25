@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref, onBeforeMount } from 'vue';
+import { useRouter } from 'vue-router'; // ← AJOUTÉ
 import { UEDAO } from '@/domain/does/UEDAO';
 import type { IUE } from '@/domain/entities/Ue';
 import { UE } from '@/domain/entities/Ue';
 import CustomButton from '@/presentation/components/forms/components/customButton.vue';
 import { BootstrapButtonEnum } from '@/types/BootstrapButtonEnum';
 import UeForm from '@/presentation/components/forms/UeForme.vue';
+
+const router = useRouter(); // ← AJOUTÉ
 
 const ueList = ref<IUE[]>([]);
 const ueFormRef = ref();
@@ -27,10 +30,11 @@ const openCreateForm = () => {
   ueFormRef.value?.openForm();
 };
 
-// Ouvrir le formulaire pour éditer une UE
-const openEditForm = (ue: IUE) => {
-  selectedUe.value = new UE(ue.ID, ue.Intitule, ue.NumeroUe, ue.Parcours);
-  ueFormRef.value?.openForm(selectedUe.value);
+// MODIFIÉ: Rediriger vers la page de détails au lieu d'ouvrir le modal
+const goToDetail = (ueId: number | null) => {
+  if (ueId) {
+    router.push(`/ue/${ueId}`);
+  }
 };
 
 // Supprimer une UE
@@ -97,11 +101,11 @@ onBeforeMount(async () => {
                 </td>
               </tr>
               <tr v-for="ue in ueList" :key="ue.ID ?? 0">
-                <!-- Bouton édition -->
+                <!-- Bouton édition - MODIFIÉ -->
                 <td>
                   <button 
                     class="btn btn-link text-primary p-0" 
-                    @click="openEditForm(ue)"
+                    @click="goToDetail(ue.ID)"
                     title="Modifier"
                   >
                     <i class="bi bi-pencil-fill"></i>
@@ -150,7 +154,7 @@ onBeforeMount(async () => {
       </div>
     </div>
 
-    <!-- Formulaire modal UE -->
+    <!-- Formulaire modal UE (gardé pour la création uniquement) -->
     <UeForm 
       ref="ueFormRef"
       :ue="selectedUe"

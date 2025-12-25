@@ -93,7 +93,7 @@ export class UEDAO implements IDAO<IUE> {
     
     const newUE = { 
       ...data, 
-      ID: Date.now() + Math.random()
+      ID: Date.now()
     };
     
     UEList.push(newUE);

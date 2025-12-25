@@ -9,7 +9,26 @@ export class EtudiantDAO implements IDAO<IEtudiant> {
   private parcoursDAO = ParcoursDAO.getInstance();
 
   private constructor() {
-    // Ne rien faire dans le constructeur
+    this.initDefaultEtudiants();
+  }
+
+  // Ajoute cette méthode pour initialiser des étudiants par défaut
+  private async initDefaultEtudiants() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    
+    if (!saved) {
+      const parcoursList = await this.parcoursDAO.list();
+      
+      const defaultEtudiants = [
+        { ID: 1, Nom: 'Droz', Prenom: 'Aubin', Email: 'aubin.droz@univ.fr', ParcoursId: parcoursList[0]?.ID || 1 },
+        { ID: 2, Nom: 'Dostie', Prenom: 'Alice', Email: 'alice.dostie@univ.fr', ParcoursId: parcoursList[0]?.ID || 1 },
+        { ID: 3, Nom: 'Polanco', Prenom: 'Khalil', Email: 'khalil.polanco@univ.fr', ParcoursId: parcoursList[0]?.ID || 1 },
+        { ID: 4, Nom: 'Wadham', Prenom: 'Lucinda', Email: 'lucinda.wadham@univ.fr', ParcoursId: parcoursList[1]?.ID || 2 },
+        { ID: 5, Nom: 'Martin', Prenom: 'Lucas', Email: 'lucas.martin@univ.fr', ParcoursId: parcoursList[1]?.ID || 2 },
+      ];
+      
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultEtudiants));
+    }
   }
 
   public static getInstance(): EtudiantDAO { 
@@ -19,9 +38,8 @@ export class EtudiantDAO implements IDAO<IEtudiant> {
     return EtudiantDAO.instance; 
   }
 
-  /**
-   * Charge les étudiants depuis localStorage
-   */
+  // ... reste du code inchangé
+  
   private async loadFromStorage(): Promise<IEtudiant[]> {
     const saved = localStorage.getItem(STORAGE_KEY);
     
@@ -52,9 +70,6 @@ export class EtudiantDAO implements IDAO<IEtudiant> {
     return [];
   }
 
-  /**
-   * Sauvegarde les étudiants dans localStorage
-   */
   private saveToStorage(etudiantList: IEtudiant[]): void {
     try {
       const dataToStore = etudiantList.map(etudiant => ({
@@ -72,9 +87,6 @@ export class EtudiantDAO implements IDAO<IEtudiant> {
     }
   }
 
-  /**
-   * Vérifie si un étudiant avec le même Nom + Prénom + Email existe déjà
-   */
   private async etudiantExists(nom: string, prenom: string, email: string, excludeId?: number): Promise<boolean> {
     const etudiantList = await this.loadFromStorage();
     return etudiantList.some(e => 
@@ -86,10 +98,8 @@ export class EtudiantDAO implements IDAO<IEtudiant> {
   }
 
   public async create(data: IEtudiant): Promise<IEtudiant> { 
-    // Vérifier que l'étudiant n'existe pas déjà (Nom + Prénom + Email)
-    // Un étudiant ne peut exister qu'une seule fois
     if (await this.etudiantExists(data.Nom, data.Prenom, data.Email)) {
-      throw new Error(`L'étudiant "${data.Nom} ${data.Prenom}" avec l'email "${data.Email}" existe déjà et suit déjà un parcours`);
+      throw new Error(`L'étudiant "${data.Nom} ${data.Prenom}" avec l'email "${data.Email}" existe déjà`);
     }
 
     const etudiantList = await this.loadFromStorage();
@@ -124,7 +134,6 @@ export class EtudiantDAO implements IDAO<IEtudiant> {
       throw new Error('Étudiant non trouvé');
     }
 
-    // Vérifier que le même étudiant n'existe pas ailleurs (même si on change le parcours)
     if (await this.etudiantExists(data.Nom, data.Prenom, data.Email, id)) {
       throw new Error(`Un autre étudiant avec ce nom, prénom et email existe déjà`);
     }
@@ -150,9 +159,6 @@ export class EtudiantDAO implements IDAO<IEtudiant> {
     return this.loadFromStorage();
   }
   
-  /**
-   * Méthode utilitaire pour rechercher des étudiants par parcours
-   */
   public async findByParcours(parcoursId: number): Promise<IEtudiant[]> {
     const allEtudiants = await this.loadFromStorage();
     return allEtudiants.filter(etudiant => 
